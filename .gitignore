@@ -19,6 +19,13 @@
 
 # production
 /build
+*.http
+*.log
+/src/dataseed
+.vscode
+.idea
+todo.js
+/test
 
 # misc
 .DS_Store
@@ -39,3 +46,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# DevContext - AI coding context
+.devctx/
