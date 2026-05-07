@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { tokenSecret } from "@/env_config/env_conf";
 import { connectionDb } from "@/config/db_config";
 import UsersModel from "@/models/users.model";
 import SessionModel from "@/models/session.model";
@@ -29,7 +28,7 @@ export async function POST(request) {
 		// Verify refresh token
 		let decoded;
 		try {
-			decoded = jwt.verify(refreshToken, tokenSecret);
+			decoded = jwt.verify(refreshToken, process.env.TOKEN_SECRET);
 		} catch (error) {
 			return NextResponse.json(
 				{ success: false, message: "Invalid or expired refresh token" },
@@ -83,7 +82,7 @@ export async function POST(request) {
 			isAdmin: user.isAdmin,
 		};
 
-		const newAccessToken = jwt.sign(tokenData, tokenSecret, {
+		const newAccessToken = jwt.sign(tokenData, process.env.TOKEN_SECRET, {
 			expiresIn: "1d",
 		});
 

@@ -5,7 +5,6 @@ import Project from "@/models/projects.model";
 import User from "@/models/users.model";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { tokenSecret } from "@/env_config/env_conf";
 
 export async function GET(request) {
 	try {
@@ -14,7 +13,7 @@ export async function GET(request) {
 		const token = cookieStore.get("token")?.value;
 		if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-		const decoded = verify(token, tokenSecret);
+		const decoded = verify(token, process.env.TOKEN_SECRET);
 		const user = await User.findById(decoded.id).populate("teamId", "name");
 		if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 

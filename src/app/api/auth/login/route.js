@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { loginSchema } from "@/schema/login.schema";
 import UsersModel from "@/models/users.model";
 import SessionModel from "@/models/session.model";
-import { tokenSecret } from "@/env_config/env_conf";
 import { connectionDb } from "@/config/db_config";
 import { UAParser } from "ua-parser-js";
 
@@ -49,11 +48,11 @@ export async function POST(request) {
 			isAdmin: existingUser.isAdmin,
 		};
 
-		const token = jwt.sign(tokenData, tokenSecret, {
+		const token = jwt.sign(tokenData, process.env.TOKEN_SECRET, {
 			expiresIn: "1d",
 		});
 
-		const refreshToken = jwt.sign(tokenData, tokenSecret, {
+		const refreshToken = jwt.sign(tokenData, process.env.TOKEN_SECRET, {
 			expiresIn: "5d",
 		});
 

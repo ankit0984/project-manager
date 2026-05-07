@@ -21,25 +21,22 @@ export default function TeamsPage() {
 	const [editingTeam, setEditingTeam] = useState(null);
 	const [formData, setFormData] = useState({ name: "", members: [] });
 
-	// Members infinite scroll state
+	// Members list state
 	const [users, setUsers] = useState([]);
 	const [memberSearch, setMemberSearch] = useState("");
 	const debouncedSearch = useDebounce(memberSearch, 400);
-	const [membersPage, setMembersPage] = useState(1);
-	const [membersTotalPages, setMembersTotalPages] = useState(1);
 	const [membersLoading, setMembersLoading] = useState(false);
-	const sentinelRef = useRef(null);
-	const listRef = useRef(null);
-	// Refs to avoid stale closures in the IntersectionObserver
-	const membersPageRef = useRef(1);
-	const membersTotalPagesRef = useRef(1);
-	const membersLoadingRef = useRef(false);
+	const [hasMoreMembers, setHasMoreMembers] = useState(false);
+
+	// Use refs so the scroll handler always reads current values without stale closures
+	const pageRef = useRef(1);
+	const totalPagesRef = useRef(1);
+	const loadingRef = useRef(false);
+	const searchRef = useRef("");
 
 	// ── Teams ────────────────────────────────────────────────────────────────
 
-	useEffect(() => {
-		fetchTeams();
-	}, []);
+	useEffect(() => { fetchTeams(); }, []);
 
 	const fetchTeams = async () => {
 		try {
@@ -52,77 +49,61 @@ export default function TeamsPage() {
 		}
 	};
 
-	// ── Members list (inside dialog) ─────────────────────────────────────────
+	// ── Members fetch ─────────────────────────────────────────────────────────
 
 	const fetchMembers = useCallback(async (page, search, replace = false) => {
-		if (membersLoadingRef.current) return;
-		membersLoadingRef.current = true;
+		if (loadingRef.current) return;
+		loadingRef.current = true;
 		setMembersLoading(true);
 		try {
 			const data = await get_users_api({ page, limit: MEMBERS_PER_PAGE, search });
 			setUsers((prev) => {
 				if (replace) return data.users;
-				// Deduplicate by _id to guard against double-fires
-				const existingIds = new Set(prev.map((u) => u._id));
-				const fresh = data.users.filter((u) => !existingIds.has(u._id));
-				return [...prev, ...fresh];
+				const seen = new Set(prev.map((u) => u._id));
+				return [...prev, ...data.users.filter((u) => !seen.has(u._id))];
 			});
-			membersTotalPagesRef.current = data.totalPages;
-			setMembersTotalPages(data.totalPages);
-			membersPageRef.current = page;
-			setMembersPage(page);
+			pageRef.current = page;
+			totalPagesRef.current = data.totalPages;
+			setHasMoreMembers(page < data.totalPages);
 		} catch {
-			console.error("Failed to fetch users");
+			console.error("Failed to fetch members");
 		} finally {
-			membersLoadingRef.current = false;
+			loadingRef.current = false;
 			setMembersLoading(false);
 		}
 	}, []);
 
-	// Reset list when search changes
+	// Reset + reload when search changes or dialog opens
 	useEffect(() => {
 		if (!dialogOpen) return;
+		searchRef.current = debouncedSearch;
 		setUsers([]);
-		membersPageRef.current = 1;
-		membersTotalPagesRef.current = 1;
-		membersLoadingRef.current = false;
-		setMembersPage(1);
-		setMembersTotalPages(1);
+		pageRef.current = 1;
+		totalPagesRef.current = 1;
+		loadingRef.current = false;
+		setHasMoreMembers(false);
 		fetchMembers(1, debouncedSearch, true);
 	}, [debouncedSearch, dialogOpen, fetchMembers]);
 
-	// Load next page when sentinel enters view
-	useEffect(() => {
-		if (!sentinelRef.current) return;
+	// ── Scroll handler — load next page when near bottom ─────────────────────
+	const handleListScroll = useCallback((e) => {
+		const el = e.currentTarget;
+		const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+		if (nearBottom && !loadingRef.current && pageRef.current < totalPagesRef.current) {
+			fetchMembers(pageRef.current + 1, searchRef.current);
+		}
+	}, [fetchMembers]);
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				if (
-					entries[0].isIntersecting &&
-					!membersLoadingRef.current &&
-					membersPageRef.current < membersTotalPagesRef.current
-				) {
-					fetchMembers(membersPageRef.current + 1, debouncedSearch);
-				}
-			},
-			{ root: listRef.current, threshold: 0.1 }
-		);
-
-		observer.observe(sentinelRef.current);
-		return () => observer.disconnect();
-	}, [debouncedSearch, fetchMembers]);
-
-	// Reset members state when dialog closes
+	// ── Dialog open/close ─────────────────────────────────────────────────────
 	const handleDialogOpenChange = (open) => {
 		setDialogOpen(open);
 		if (!open) {
 			setMemberSearch("");
 			setUsers([]);
-			setMembersPage(1);
-			setMembersTotalPages(1);
-			membersPageRef.current = 1;
-			membersTotalPagesRef.current = 1;
-			membersLoadingRef.current = false;
+			pageRef.current = 1;
+			totalPagesRef.current = 1;
+			loadingRef.current = false;
+			setHasMoreMembers(false);
 		}
 	};
 
@@ -236,9 +217,9 @@ export default function TeamsPage() {
 											/>
 										</div>
 
-										{/* Scrollable list with infinite scroll */}
+										{/* Scrollable list — onScroll triggers next page */}
 										<div
-											ref={listRef}
+											onScroll={handleListScroll}
 											className="border rounded-md p-2 max-h-52 overflow-y-auto space-y-1"
 										>
 											{users.map((user) => (
@@ -258,16 +239,22 @@ export default function TeamsPage() {
 												</label>
 											))}
 
-											{/* Sentinel — triggers next page load */}
-											<div ref={sentinelRef} className="py-1 flex justify-center">
-												{membersLoading && (
+											{/* Loading indicator at bottom */}
+											{membersLoading && (
+												<div className="flex justify-center py-2">
 													<LoaderIcon className="h-4 w-4 animate-spin text-muted-foreground" />
-												)}
-											</div>
+												</div>
+											)}
 
 											{!membersLoading && users.length === 0 && (
 												<div className="text-sm text-muted-foreground text-center py-2">
 													No members found
+												</div>
+											)}
+
+											{!membersLoading && !hasMoreMembers && users.length > 0 && (
+												<div className="text-xs text-muted-foreground text-center py-1">
+													All members loaded
 												</div>
 											)}
 										</div>

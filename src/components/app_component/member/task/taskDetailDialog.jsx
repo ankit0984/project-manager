@@ -1,16 +1,48 @@
-const { Button } = require("@/components/ui/button");
-const { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } = require("@/components/ui/dialog");
-const { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } = require("@/components/ui/select");
-const { Textarea } = require("@/components/ui/textarea");
-const { CalendarIcon } = require("lucide-react");
-const { FolderIcon } = require("lucide-react");
-const { Badge } = require("lucide-react");
-const { useState } = require("react");
+"use client";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { CalendarIcon, FolderIcon, SendIcon } from "lucide-react";
+import { toast } from "sonner";
+import { update_member_task_api } from "@/api/api";
 
+// ── Constants ────────────────────────────────────────────────────────────────
+const STATUS_BADGE = {
+	todo: "secondary",
+	"in-progress": "default",
+	done: "outline",
+};
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function isOverdue(task) {
 	return task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "done";
 }
+
+function formatDate(d) {
+	if (!d) return null;
+	return new Date(d).toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 export function TaskDetailDialog({ task, open, onClose, onStatusChange, onNoteAdded }) {
 	const [note, setNote] = useState("");
 	const [posting, setPosting] = useState(false);
@@ -54,13 +86,19 @@ export function TaskDetailDialog({ task, open, onClose, onStatusChange, onNoteAd
 							<Badge variant={STATUS_BADGE[task.status]}>{task.status}</Badge>
 							{task.projectId && (
 								<span className="flex items-center gap-1 text-xs text-muted-foreground">
-									<FolderIcon className="h-3 w-3" />{task.projectId.name}
+									<FolderIcon className="h-3 w-3" />
+									{task.projectId.name}
 								</span>
 							)}
 							{task.dueDate && (
-								<span className={`flex items-center gap-1 text-xs ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
+								<span
+									className={`flex items-center gap-1 text-xs ${
+										overdue ? "text-destructive" : "text-muted-foreground"
+									}`}
+								>
 									<CalendarIcon className="h-3 w-3" />
-									{overdue ? "Overdue · " : ""}{formatDate(task.dueDate)}
+									{overdue ? "Overdue · " : ""}
+									{formatDate(task.dueDate)}
 								</span>
 							)}
 						</div>
@@ -71,14 +109,18 @@ export function TaskDetailDialog({ task, open, onClose, onStatusChange, onNoteAd
 					{/* Description */}
 					{task.description && (
 						<div>
-							<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Description</p>
+							<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+								Description
+							</p>
 							<p className="text-sm leading-relaxed">{task.description}</p>
 						</div>
 					)}
 
-					{/* Change status */}
+					{/* Status */}
 					<div>
-						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Status</p>
+						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+							Status
+						</p>
 						<Select value={task.status} onValueChange={handleStatus} disabled={statusUpdating}>
 							<SelectTrigger className="w-44">
 								<SelectValue />
@@ -91,20 +133,20 @@ export function TaskDetailDialog({ task, open, onClose, onStatusChange, onNoteAd
 						</Select>
 					</div>
 
-					{/* Daily update input */}
+					{/* Daily update */}
 					<div>
-						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Post a Daily Update</p>
-						<div className="flex gap-2">
-							<Textarea
-								placeholder="What did you work on today? Any blockers?"
-								value={note}
-								onChange={(e) => setNote(e.target.value)}
-								className="min-h-[72px] resize-none text-sm"
-								onKeyDown={(e) => {
-									if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePostNote();
-								}}
-							/>
-						</div>
+						<p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+							Post a Daily Update
+						</p>
+						<Textarea
+							placeholder="What did you work on today? Any blockers?"
+							value={note}
+							onChange={(e) => setNote(e.target.value)}
+							className="min-h-[72px] resize-none text-sm"
+							onKeyDown={(e) => {
+								if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePostNote();
+							}}
+						/>
 						<Button
 							size="sm"
 							className="mt-2"
@@ -127,13 +169,17 @@ export function TaskDetailDialog({ task, open, onClose, onStatusChange, onNoteAd
 								{[...task.updates].reverse().map((u, i) => (
 									<div key={i} className="rounded-md border bg-muted/40 px-3 py-2.5">
 										<div className="flex items-center justify-between mb-1">
-											<span className="text-xs font-medium">{u.postedBy?.full_name || "You"}</span>
+											<span className="text-xs font-medium">
+												{u.postedBy?.full_name || "You"}
+											</span>
 											<span className="text-xs text-muted-foreground">
 												{new Date(u.createdAt).toLocaleDateString("en-US", {
-													month: "short", day: "numeric",
+													month: "short",
+													day: "numeric",
 												})}{" "}
 												{new Date(u.createdAt).toLocaleTimeString("en-US", {
-													hour: "2-digit", minute: "2-digit",
+													hour: "2-digit",
+													minute: "2-digit",
 												})}
 											</span>
 										</div>

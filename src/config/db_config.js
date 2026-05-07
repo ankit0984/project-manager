@@ -1,12 +1,5 @@
 import mongoose from "mongoose";
 import logger from "@/logger/logger";
-import { prod_databaseUrl } from "@/env_config/env_conf";
-
-const MONGO_URI = prod_databaseUrl;
-
-if (!MONGO_URI) {
-	throw new Error("MongoDB URI missing for current environment");
-}
 
 // Cache connection across hot reloads
 let cached = globalThis.mongoose;
@@ -16,6 +9,12 @@ if (!cached) {
 }
 
 export async function connectionDb() {
+	const MONGO_URI = process.env.PROD_DATABASE_URL;
+
+	if (!MONGO_URI) {
+		throw new Error("MongoDB URI missing for current environment");
+	}
+
 	if (cached.conn) {
 		return cached.conn;
 	}
