@@ -1,0 +1,36 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ethara_ai
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+
+      # ── Database ──────────────────────────────────────────────
+      PROD_DATABASE_URL: ${PROD_DATABASE_URL}
+
+      # ── Auth ──────────────────────────────────────────────────
+      TOKEN_SECRET: ${TOKEN_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+
+      # ── URLs ──────────────────────────────────────────────────
+      # Update DOMAIN_URL to your actual domain or server IP in production
+      DOMAIN_URL: ${DOMAIN_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000/api}
+
+      # ── Email (SMTP) ───────────────────────────────────────────
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SENDER_EMAIL: ${SENDER_EMAIL}
+      RECIPIENT_EMAIL: ${RECIPIENT_EMAIL}
+
+      # ── Next.js ────────────────────────────────────────────────
+      NEXT_TELEMETRY_DISABLED: 1
+      PORT: 3000
+      HOSTNAME: 0.0.0.0

@@ -20,6 +20,7 @@ import {
 	LayersIcon,
 } from "lucide-react";
 import Link from "next/link";
+import StatCard from "@/components/app_component/member/dashboard/statsCard";
 
 const chartConfig = {
 	done: { label: "Done", color: "var(--chart-1)" },
@@ -32,25 +33,6 @@ const STATUS_META = {
 	"in-progress": { label: "In Progress", variant: "default", icon: ClockIcon },
 	done: { label: "Done", variant: "outline", icon: CheckCircle2Icon },
 };
-
-function StatCard({ icon: Icon, label, value, sub, color }) {
-	return (
-		<Card>
-			<CardHeader className="pb-2">
-				<div className="flex items-center justify-between">
-					<CardDescription>{label}</CardDescription>
-					<Icon className={`h-4 w-4 ${color}`} />
-				</div>
-				<CardTitle className="text-3xl font-bold tabular-nums">{value}</CardTitle>
-			</CardHeader>
-			{sub && (
-				<CardContent>
-					<p className="text-xs text-muted-foreground">{sub}</p>
-				</CardContent>
-			)}
-		</Card>
-	);
-}
 
 export default function MemberDashboardPage() {
 	const [data, setData] = useState(null);
