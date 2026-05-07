@@ -3,14 +3,13 @@ import { connectionDb } from "@/config/db_config";
 import User from "@/models/users.model";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { tokenSecret } from "@/env_config/env_conf";
 import bcrypt from "bcryptjs";
 
 async function requireAdmin() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 	if (!token) return null;
-	const decoded = verify(token, tokenSecret);
+	const decoded = verify(token, process.env.TOKEN_SECRET);
 	const user = await User.findById(decoded.id);
 	if (!user || user.role !== "admin") return null;
 	return user;

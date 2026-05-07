@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { tokenSecret } from "@/env_config/env_conf";
 import { connectionDb } from "@/config/db_config";
 import SessionModel from "@/models/session.model";
 
@@ -14,7 +13,7 @@ export async function GET(request) {
 			return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 		}
 
-		const decoded = jwt.verify(token, tokenSecret);
+		const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
 
 		const sessions = await SessionModel.find({
 			userId: decoded.id,
@@ -39,7 +38,7 @@ export async function DELETE(request) {
 			return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 		}
 
-		const decoded = jwt.verify(token, tokenSecret);
+		const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
 		const body = await request.json();
 		const { sessionId, logoutAll } = body;
 

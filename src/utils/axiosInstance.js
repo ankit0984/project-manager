@@ -1,8 +1,7 @@
-import { ApiBaseUrl } from "@/env_config/env_conf";
 import axios from "axios";
 
 const axiosInstance = axios.create({
-	baseURL: ApiBaseUrl || "http://localhost:3000/api",
+	baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api",
 	withCredentials: true,
 	headers: {
 		"Content-Type": "application/json",

@@ -5,21 +5,14 @@ import UsersModel from "@/models/users.model";
 import jwt from "jsonwebtoken";
 import VerificationEmail from "@/template/verifyEmail";
 import PasswordReset from "@/template/passwordreset";
-import {
-	tokenSecret,
-	smtpHost,
-	smtpPort,
-	smtpUser,
-	smtpPass,
-	senderEmail,
-} from "@/env_config/env_conf";
+
 
 const transporter = nodemailer.createTransport({
-	host: smtpHost,
-	port: smtpPort,
+	host: process.env.SMTP_HOST,
+	port: process.env.SMTP_PORT,
 	auth: {
-		user: smtpUser,
-		pass: smtpPass,
+		user: process.env.SMTP_USER,
+		pass: process.env.SMTP_PASS,
 	},
 });
 
@@ -33,7 +26,7 @@ export const sendEmail = async ({ email, emailType, userId, username }) => {
 	try {
 		const rawToken = crypto.randomBytes(32).toString("hex");
 
-		const token = jwt.sign({ userId }, tokenSecret, {
+		const token = jwt.sign({ userId }, process.env.TOKEN_SECRET, {
 			expiresIn: "1h",
 		}); //jwt for reset password
 
@@ -64,7 +57,7 @@ export const sendEmail = async ({ email, emailType, userId, username }) => {
 		}
 
 		const mailoptions = {
-			from: senderEmail,
+			from: process.env.SENDER_EMAIL,
 			to: email,
 			subject: emailType === "VERIFY" ? "verify email" : "Reset your password",
 			html: htmlContent,

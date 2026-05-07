@@ -5,7 +5,6 @@ import User from "@/models/users.model";
 import Task from "@/models/task.model";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { tokenSecret } from "@/env_config/env_conf";
 
 export async function GET(request, { params }) {
 	try {
@@ -17,7 +16,7 @@ export async function GET(request, { params }) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		const decoded = verify(token, tokenSecret);
+		const decoded = verify(token, process.env.TOKEN_SECRET);
 		const user = await User.findById(decoded.id);
 
 		if (!user || user.role !== "admin") {
@@ -49,7 +48,7 @@ export async function PATCH(request, { params }) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		const decoded = verify(token, tokenSecret);
+		const decoded = verify(token, process.env.TOKEN_SECRET);
 		const user = await User.findById(decoded.id);
 
 		if (!user || user.role !== "admin") {
@@ -87,7 +86,7 @@ export async function DELETE(request, { params }) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		const decoded = verify(token, tokenSecret);
+		const decoded = verify(token, process.env.TOKEN_SECRET);
 		const user = await User.findById(decoded.id);
 
 		if (!user || user.role !== "admin") {

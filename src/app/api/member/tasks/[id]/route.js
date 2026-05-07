@@ -4,14 +4,13 @@ import Task from "@/models/task.model";
 import User from "@/models/users.model";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { tokenSecret } from "@/env_config/env_conf";
 
 async function getMember() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 	if (!token) return null;
 	try {
-		const decoded = verify(token, tokenSecret);
+		const decoded = verify(token, process.env.TOKEN_SECRET);
 		return await User.findById(decoded.id);
 	} catch {
 		return null;
