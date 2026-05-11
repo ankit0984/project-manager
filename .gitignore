@@ -24,6 +24,7 @@
 /src/dataseed
 .vscode
 .idea
+.junie
 todo.js
 /test
 
