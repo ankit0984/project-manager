@@ -36,6 +36,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -91,7 +92,7 @@ COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 USER node
 
 # Expose port 3000 to allow HTTP traffic
-EXPOSE 3000
-
+#EXPOSE 3000
+EXPOSE 8080
 # Start Next.js standalone server
 CMD ["node", "server.js"]
