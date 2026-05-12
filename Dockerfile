@@ -36,7 +36,6 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
-ENV HOSTNAME="0.0.0.0"
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -63,9 +62,7 @@ WORKDIR /app
 
 # Set production environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV PROD_DATABASE_URL="mongodb+srv://portfolio:Pranjali226547@portfolio.hzfv1yi.mongodb.net/manager_demo?appName=manager.demo"
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -92,7 +89,7 @@ COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 USER node
 
 # Expose port 3000 to allow HTTP traffic
-#EXPOSE 3000
-EXPOSE 8080
+EXPOSE 3000
+
 # Start Next.js standalone server
 CMD ["node", "server.js"]
