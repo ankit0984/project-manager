@@ -62,9 +62,8 @@ WORKDIR /app
 
 # Set production environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV PROD_DATABASE_URL="mongodb+srv://portfolio:Pranjali226547@portfolio.hzfv1yi.mongodb.net/manager_demo?appName=manager.demo"
+
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
