@@ -27,6 +27,8 @@
 .junie
 todo.js
 /test
+script.sh
+*.sh
 
 # misc
 .DS_Store
